@@ -1,22 +1,18 @@
 FROM node:18-alpine As build
-
-WORKDIR /usr/src/app
-COPY --chown=node:node package*.json ./
-RUN npm ci
-COPY --chown=node:node . .
-RUN npm run prisma:generate
-RUN npm run build
+WORKDIR /usr
+COPY package*.json ./
 ENV NODE_ENV production
-RUN npm ci --only=production && npm cache clean --force
-RUN npm run prisma:generate
+RUN npm ci --omit=dev && npm cache clean --force
+COPY ./ ./
+RUN npx prisma generate
+RUN npm run build
+
+FROM node:18-alpine AS production
+WORKDIR /app
+#See in config Prisma
+COPY --chown=node:node --from=build /usr/src/prisma/schema/ /app/prisma/
+COPY --chown=node:node --from=build /usr/node_modules ./node_modules
+COPY --chown=node:node --from=build /usr/dist ./dist
 USER node
-
-FROM node:18-alpine As production
-
-COPY --chown=node:node --from=build /usr/src/app/libs ./libs
-COPY --chown=node:node --from=build /usr/src/app package*.json ./
-COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
-COPY --chown=node:node --from=build /usr/src/app/dist ./dist
-
 EXPOSE 3000
-CMD npm run migrations:prod && npm run start:prod
+CMD npx prisma migrate deploy && node dist/main
