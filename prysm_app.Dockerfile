@@ -24,7 +24,7 @@ ENTRYPOINT ["./entrypoint.sh"]
 
 #Entrypoint.sh
 #!/bin/sh
-npm run db:migrate
-npm run list-root
+#!/bin/sh
+npm run db:deploy
 npm run db:seed
 npm run start:prod
