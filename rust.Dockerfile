@@ -27,3 +27,21 @@ FROM alpine AS runner
 RUN apk add ca-certificates
 COPY --from=builder /app/target/release/solana-mvrv-z-score /
 CMD ["/solana-mvrv-z-score"]
+
+########################
+
+FROM rust:alpine AS builder
+
+RUN apk add build-base pkgconfig openssl-dev openssl-libs-static ca-certificates
+WORKDIR /app
+COPY ./ .
+RUN cargo build --release
+
+# --- CONTAINER ---
+
+FROM scratch
+
+COPY --from=builder /app/target/release/solana-mvrv-z-score /
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+CMD ["/solana-mvrv-z-score"]
