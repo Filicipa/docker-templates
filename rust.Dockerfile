@@ -5,7 +5,7 @@ COPY ./Cargo.toml ./Cargo.toml
 COPY ./src ./src
 RUN cargo build --target x86_64-unknown-linux-gnu --release
 
-FROM debian:stable-slim
+FROM debian:stable-slim AS runner
 # Install required global package
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -39,7 +39,7 @@ RUN cargo build --release
 
 # --- CONTAINER ---
 
-FROM scratch
+FROM scratch AS runner
 
 COPY --from=builder /app/target/release/solana-mvrv-z-score /
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
